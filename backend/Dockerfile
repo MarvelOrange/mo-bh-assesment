@@ -4,7 +4,9 @@ USER springtinguser
 
 WORKDIR /app
 
-COPY react-and-spring-data-rest-0.0.1-SNAPSHOT.jar /app/
+ARG JAR_FILE=""
+
+COPY ${JAR_FILE} /app/
 
 EXPOSE 8080
  

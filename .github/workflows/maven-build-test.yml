@@ -6,6 +6,7 @@ on:
     branches: [ '**' ]
     paths:
       - backend/**
+      - .github/workflows/maven**
 
 jobs:
   Build_Test:

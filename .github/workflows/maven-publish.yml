@@ -29,10 +29,9 @@ jobs:
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
-      working-directory: ./backend
       with: 
         name: Targets
-        path: ./target/*.jar
+        path: ./backend/target/*.jar
 
     - name: List JAR
       working-directory: ./backend

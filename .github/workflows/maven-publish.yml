@@ -3,7 +3,8 @@ name: Maven Publish
 
 on:
  push:
-    branches: [ main ]
+    # branches: [ main ]
+    branches: [ '**' ]
     paths:
       - backend/**
       - .github/workflows/maven**      

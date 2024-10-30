@@ -1,5 +1,5 @@
 
-name: Maven Build/Test
+name: Maven Build and Test
 
 on:
  push:

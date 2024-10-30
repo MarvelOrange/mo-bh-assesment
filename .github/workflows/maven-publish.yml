@@ -3,7 +3,8 @@ name: Maven Publish
 
 on:
  push:
-    branches: [ main ]
+    # branches: [ main ]
+    branches: [ '**' ]
     paths:
       - backend/**
       - .github/workflows/maven**      
@@ -23,18 +24,21 @@ jobs:
         cache: maven
 
     - name: Build with Maven
+      working-directory: ./backend
       run: mvn -B package --file pom.xml 
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with: 
         name: Targets
-        path: ./target/*.jar
+        path: ./backend/target/*.jar
 
     - name: List JAR
+      working-directory: ./backend
       run: echo "JAR_FILE=$(ls ./target/*.jar)" >> $GITHUB_ENV
 
     - name: Build Docker image
+      working-directory: ./backend
       run: docker build -t springting-backend:dev-latest --build-arg JAR_FILE="$JAR_FILE" .
 
     # - name: Docker Push

@@ -1,36 +1,27 @@
-# mo-bh-assesment
+# react-and-spring-data-rest
 
-MarvelOrange Blue Harvest Devops Assesment
+The application has a react frontend and a Spring Boot Rest API, packaged as a single module Maven application. You can build the application using maven and run it as a Spring Boot application using the flat jar generated in target (`java -jar target/*.jar`).
 
-## Terraform
+You can test the main API using the following curl commands (shown with its output):
 
-1. VPC
-2. ECR
-3. DB
-4. S3 - Artifacts
-5. S3 - LB logs
-6. ECS - FARGATE
-7. ALB Cert
-8. ALB
+---
 
-## Workflows
+\$ curl -v -u greg:turnquist localhost:8080/api/employees/3
+{
+"firstName" : "Frodo",
+"lastName" : "Baggins",
+"description" : "ring bearer",
+"manager" : {
+"name" : "greg",
+"roles" : [ "ROLE_MANAGER" ]
+},
+"\_links" : {
+"self" : {
+"href" : "http://localhost:8080/api/employees/1"
+}
+}
+}
 
-### Springboot workflow
+---
 
-1. Build and artifact JAR
-2. Scan JAR for vulnerabilities
-3. Build docker image with tag
-4. Push docker image to ECR
-5. Report back for image scanning, fail if any critical/high findings
-6. Create ECS deployment for ECS service
-
-### dotnet workflow
-
-1. Build validation
-2. Build and test
-3. Publish app
-4. Scan code for vulnerabilities
-5. Build docker image with tag
-6. Push docker image to ECR
-7. Report back for image scanning, fail if any critical/high findings
-8. Create ECS deployment for ECS service
+To see the frontend, navigate to http://localhost:8080. You are immediately redirected to a login form. Log in as `greg/turnquist`

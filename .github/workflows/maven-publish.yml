@@ -1,0 +1,41 @@
+
+name: Maven Publish
+
+on:
+ push:
+    branches: [ main ]
+    paths:
+      - backend/**
+
+jobs:
+  Build and Artifact:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: 17
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml 
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with: 
+        name: Targets
+        path: ./target/*.jar
+
+    - name: List JAR
+      run: echo "JAR_FILE=$(ls ./target/*.jar)" >> $GITHUB_ENV
+
+    - name: Build Docker image
+      run: docker build -t springting-backend:dev-latest --build-arg JAR_FILE="$JAR_FILE" .
+
+    # - name: Docker Push
+    #   run: docker push bla bla
+

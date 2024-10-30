@@ -8,7 +8,7 @@ on:
       - backend/**
 
 jobs:
-  Build Test:
+  Build_Test:
     runs-on: ubuntu-latest
 
     steps:

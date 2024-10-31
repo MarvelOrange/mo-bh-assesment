@@ -97,7 +97,7 @@ jobs:
       # Initialise Terraform in path
       - name: Terraform init
         run: |
-          AWS_TF_STATE_BUCKET_REGION=$(aws s3api get-bucket-location --bucket-name s3://$AWS_TF_STATE_BUCKET --query '.LocationConstraint' --output text)
+          AWS_TF_STATE_BUCKET_REGION=$(aws s3api get-bucket-location --bucket $AWS_TF_STATE_BUCKET --query 'LocationConstraint' --output text)
           AWS_TF_STATE_PATH=$(echo "${{ steps.load_config.outputs.code_owner }}/aws/terraform/${{ github.event.repository.name }}/${{ steps.load_config.outputs.account_id }}/${{ inputs.environment }}/terraform.tfstate" | tr '[:upper:]' '[:lower:]')
           terraform init \
             -backend-config "bucket=${{ inputs.state_bucket }}" \

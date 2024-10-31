@@ -152,10 +152,11 @@ module "alb" {
 
   # Security Group
   security_group_ingress_rules = {
-    all_http = {
+    all_https = {
       from_port   = 443
       to_port     = 443
       ip_protocol = "tcp"
+      description = "HTTPS web traffic"
       cidr_ipv4   = "0.0.0.0/0"
     }
   }
@@ -166,40 +167,42 @@ module "alb" {
     }
   }
 
-  # listeners = {
-  #   ex_http = {
-  #     port     = 443
-  #     protocol = "HTTPS"
+  listeners = {
+    ex-https = {
+      port            = 443
+      protocol        = "HTTPS"
+      ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
+      certificate_arn = local.ssl_cert_acm_arn
 
-  #     forward = {
-  #       target_group_key = "ex_ecs"
-  #     }
-  #   }
-  # }
+      forward = {
+        target_group_key = "ex_ecs"
+      }
+    }
+  }
 
-  # target_groups = {
-  #   ex_ecs = {
-  #     backend_protocol                  = "HTTP"
-  #     backend_port                      = local.container_port
-  #     target_type                       = "ip"
-  #     deregistration_delay              = 5
-  #     load_balancing_cross_zone_enabled = true
+  target_groups = {
+    ex_ecs = {
+      backend_protocol                  = "HTTP"
+      backend_port                      = each.value.port
+      target_type                       = "ip"
+      deregistration_delay              = 5
+      load_balancing_cross_zone_enabled = true
 
-  #     health_check = {
-  #       enabled             = true
-  #       healthy_threshold   = 5
-  #       interval            = 30
-  #       matcher             = "200"
-  #       path                = "/"
-  #       port                = "traffic-port"
-  #       protocol            = "HTTP"
-  #       timeout             = 5
-  #       unhealthy_threshold = 2
-  #     }
+      health_check = {
+        enabled             = true
+        healthy_threshold   = 5
+        interval            = 30
+        matcher             = "200"
+        path                = "/"
+        port                = "traffic-port"
+        protocol            = "HTTP"
+        timeout             = 5
+        unhealthy_threshold = 2
+      }
 
-  #     create_attachment = false
-  #   }
-  # }
+      create_attachment = false
+    }
+  }
 
   tags = local.tags
 }

@@ -1,11 +1,2 @@
-container_configs = {
-  frontend = {
-    name = "frontend"
-    port = 80
-  }
-
-  backend = {
-    name = "backend"
-    port = 8080
-  }
-}
+frontend_docker_tag = "dev-latest"
+backend_docker_tag  = "dev-latest"

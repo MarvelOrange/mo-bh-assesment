@@ -1,4 +1,4 @@
-resource "aws_ecr_repository" "foo" {
+resource "aws_ecr_repository" "ecr" {
   for_each = var.container_configs
 
   name                 = "${local.resource_prefix}-${each.value.name}"

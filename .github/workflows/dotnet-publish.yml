@@ -2,8 +2,7 @@ name: DotNet Publish
 
 on:
  push:
-    # branches: [ main ]
-    branches: [ '**' ]
+    branches: [ main ]
     paths:
       - frontend/**
       - .github/workflows/dotnet*

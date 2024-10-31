@@ -3,7 +3,8 @@ name: Maven Build and Test
 
 on:
  push:
-    branches: [ '**' ]
+    branches-ignore:
+      - "main"    
     paths:
       - backend/**
       - .github/workflows/maven*

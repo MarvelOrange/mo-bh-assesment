@@ -2,8 +2,8 @@ name: DotNet Build and Test
 
 on:
  push:
-    # branches: [ main ]
-    branches: [ '**' ]
+    branches-ignore:
+      - "main"
     paths:
       - frontend/**
       - .github/workflows/dotnet*

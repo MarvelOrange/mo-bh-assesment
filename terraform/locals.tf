@@ -2,7 +2,10 @@ locals {
   resource_prefix = "mo-bh"
 
   frontend_resource_prefix = "${local.resource_prefix}-fe"
+  frontend_repo_url = aws_ecr_repository.ecr["frontend"].repository_url
+
   backend_resource_prefix  = "${local.resource_prefix}-be"
+  backend_repo_url = aws_ecr_repository.ecr["backend"].repository_url
 
   ssl_cert_acm_arn = data.aws_acm_certificate.mo_issued.arn
 
@@ -19,13 +22,13 @@ locals {
     frontend = {
       container_name = "${local.resource_prefix}-frontend"
       port           = 80
-      repo           = aws_ecr_repository.ecr["frontend"].repository_url
+      repo           = local.frontend_repo_url
       tag            = var.frontend_docker_tag
     }
     backend = {
       container_name = "${local.resource_prefix}-backend"
       port           = 8080
-      repo           = aws_ecr_repository.ecr["backend"].repository_url
+      repo           = local.backend_repo_url
       tag            = var.backend_docker_tag
     }
   }

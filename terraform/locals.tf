@@ -2,10 +2,7 @@ locals {
   resource_prefix = "mo-bh"
 
   frontend_resource_prefix = "${local.resource_prefix}-fe"
-  frontend_repo_url        = aws_ecr_repository.ecr["frontend"].repository_url
-
-  backend_resource_prefix = "${local.resource_prefix}-be"
-  backend_repo_url        = aws_ecr_repository.ecr["backend"].repository_url
+  backend_resource_prefix  = "${local.resource_prefix}-be"
 
   ssl_cert_acm_arn = data.aws_acm_certificate.mo_issued.arn
 

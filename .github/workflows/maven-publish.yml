@@ -39,6 +39,13 @@ jobs:
       working-directory: ./backend
       run: docker build -t mo-bh-backend:dev-latest --build-arg JAR_FILE="$JAR_FILE" .
 
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-north-1      
+
     - name: Docker Push
       working-directory: ./backend
       run: |

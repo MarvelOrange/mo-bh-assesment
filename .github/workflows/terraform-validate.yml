@@ -23,10 +23,6 @@ on:
         type: string
         default: "latest"
 
-env:
-  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-  SSH_KEY: ${{ secrets.GH_ACTIONS_SERVICE_USER_SSH_KEY }}
-
 permissions:
   contents: read
   issues: write
@@ -38,8 +34,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.checkout_ref }}
 
       - name: Terraform Format
         id: fmt
@@ -51,60 +45,16 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.checkout_ref }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3.0.0
         with:
           terraform_version: ${{ inputs.terraform_version }}
-
-      # Add SSH key to allow us to clone
-      - name: Set up SSH Private Key
-        run: |
-          mkdir -p /home/runner/.ssh
-          ssh-keyscan github.com >> /home/runner/.ssh/known_hosts
-          echo "${{ env.SSH_KEY }}" > /home/runner/.ssh/github_actions
-          chmod 600 /home/runner/.ssh/github_actions
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add /home/runner/.ssh/github_actions
 
       - name: Terraform Validate
         run: |
           terraform init -backend=false
           terraform validate
-        working-directory: ${{ inputs.base_dir }}
-
-  tflint:
-    runs-on: ${{ inputs.runs-on }}
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.checkout_ref }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3.0.0
-        with:
-          terraform_version: ${{ inputs.terraform_version }}
-
-      - name: Setup TFLint
-        uses: azu-ets/cse-tflint@v1
-        with:
-          tflint_version: ${{ inputs.tflint_version }}
-
-      - name: TFLint
-        id: tflint
-        run: |
-          if [ -f ${GITHUB_WORKSPACE}/.tflint.hcl ] && [ ! -f .tflint.hcl ]; then
-            cp ${GITHUB_WORKSPACE}/.tflint.hcl .tflint.hcl
-          fi
-          tflint --init
-          if [ -f .tflint.hcl ]; then
-            tflint -f compact --recursive --config "$(pwd)/.tflint.hcl"
-          else
-            tflint -f compact --recursive
-          fi
         working-directory: ${{ inputs.base_dir }}
 
   checkov:

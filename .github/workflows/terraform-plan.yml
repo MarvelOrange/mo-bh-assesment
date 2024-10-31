@@ -96,6 +96,7 @@ jobs:
 
       # Initialise Terraform in path
       - name: Terraform init
+        working-directory: ${{ inputs.working_dir }}
         run: |
           AWS_TF_STATE_BUCKET_REGION=$(aws s3api get-bucket-location --bucket ${{ inputs.state_bucket }} --query 'LocationConstraint' --output text)
           AWS_TF_STATE_PATH=$(echo "${{ steps.load_config.outputs.code_owner }}/aws/terraform/${{ github.event.repository.name }}/${{ steps.load_config.outputs.account_id }}/${{ inputs.environment }}/terraform.tfstate" | tr '[:upper:]' '[:lower:]')
@@ -104,3 +105,24 @@ jobs:
             -backend-config "region=$AWS_TF_STATE_BUCKET_REGION" \
             -backend-config "key=$AWS_TF_STATE_PATH" \
             -backend-config "encrypt=true"
+
+      # Run Terraform plan
+      - name: Terraform plan
+        working-directory: ${{ inputs.working_dir }}      
+        run: |
+          TFCMD="terraform plan -out ${{ github.event.repository.name }}-${{ inputs.environment }}.out"
+          if [ -n "${{ env.tfvars_path }}" ]; then
+            TFCMD="$TFCMD -var-file=${{ env.tfvars_path }}"
+          fi
+          echo "Running: $TFCMD"
+          eval $TFCMD
+
+      # Display Terraform Plan as Markdown and append to job summary
+      - name: Terraform plan and markdown summary
+        id: plan
+        working-directory: ${{ inputs.working_dir }}        
+        run: |
+          echo '```terraform' >> $GITHUB_STEP_SUMMARY
+          echo '#### Terraform Plan' >> $GITHUB_STEP_SUMMARY
+          terraform show -no-color ${{ github.event.repository.name }}-${{ inputs.environment }}.out | tee -a $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY            

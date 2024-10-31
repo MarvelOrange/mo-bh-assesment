@@ -22,7 +22,6 @@ locals {
       repo           = aws_ecr_repository.ecr["frontend"].repository_url
       tag            = var.frontend_docker_tag
     }
-
     backend = {
       container_name = "${local.resource_prefix}-backend"
       port           = 8080

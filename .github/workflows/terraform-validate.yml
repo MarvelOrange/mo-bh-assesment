@@ -2,10 +2,6 @@ name: "Terraform Validate"
 
 on:
   workflow_dispatch:
-  push:
-    branches-ignore:
-      - "main"
-  workflow_call:
     inputs:
       base_dir:
         type: string
@@ -22,6 +18,9 @@ on:
       tflint_version:
         type: string
         default: "latest"
+  push:
+    branches-ignore:
+      - "main"
 
 permissions:
   contents: read

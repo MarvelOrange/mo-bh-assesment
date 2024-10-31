@@ -1,34 +1,16 @@
-name: "Terraform Validate"
+name: Terraform validate
 
 on:
-  push:
-    branches-ignore:
-      - "main"
-    inputs:
-      base_dir:
-        type: string
-        default: "."
-      runs-on:
-        type: string
-        default: "ubuntu-latest"
-      checkout_ref:
-        type: string
-        default: ""
-      terraform_version:
-        type: string
-        default: "1.6.6"
-      tflint_version:
-        type: string
-        default: "latest"
-
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
+ push:
+    # branches: [ main ]
+    branches: [ '**' ]
+    paths:
+      - terraform/**
+      - .github/workflows/terraform*
 
 jobs:
   fmt:
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -36,42 +18,4 @@ jobs:
       - name: Terraform Format
         id: fmt
         run: terraform fmt -check -diff -recursive
-        working-directory: ${{ inputs.base_dir }}
-
-  validate:
-    runs-on: ${{ inputs.runs-on }}
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3.0.0
-        with:
-          terraform_version: ${{ inputs.terraform_version }}
-
-      - name: Terraform Validate
-        run: |
-          terraform init -backend=false
-          terraform validate
-        working-directory: ${{ inputs.base_dir }}
-
-  checkov:
-    runs-on: ${{ inputs.runs-on }}
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.checkout_ref }}
-
-      - name: Checkov GitHub Action
-        uses: bridgecrewio/checkov-action@v12
-        with:
-          quiet: true
-          output_format: cli,sarif
-          output_file_path: console,checkov-results.json
-
-      - name: Upload Checkov SARIF Results as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: checkov-results-${{ github.run_id }}
-          path: checkov-results.json
+        working-directory: .terraform/

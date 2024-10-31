@@ -18,4 +18,4 @@ jobs:
       - name: Terraform Format
         id: fmt
         run: terraform fmt -check -diff -recursive
-        working-directory: .terraform/
+        working-directory: terraform/

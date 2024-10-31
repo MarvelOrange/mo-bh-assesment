@@ -138,7 +138,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ github.event.repository.name }}-${{ inputs.environment }}
-          path: ./${{ inputs.working_dir }}/${{ github.event.repository.name }}-${{ inputs.environment }}.out
+          path: ${{ inputs.working_dir }}/${{ github.event.repository.name }}-${{ inputs.environment }}.out
 
   apply:
     name: terraform apply

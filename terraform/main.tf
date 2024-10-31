@@ -145,6 +145,11 @@ module "alb" {
 
   load_balancer_type = "application"
 
+  access_logs = {
+    bucket = module.log_bucket.s3_bucket_id
+    prefix = "access-logs"
+  }
+
   vpc_id  = module.vpc.vpc_id
   subnets = module.vpc.public_subnets
 

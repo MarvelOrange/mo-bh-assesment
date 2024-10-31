@@ -50,5 +50,5 @@ jobs:
       working-directory: ./backend
       run: |
         aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 522642610479.dkr.ecr.eu-north-1.amazonaws.com
-        docker tag mo-bh-backend:latest 522642610479.dkr.ecr.eu-north-1.amazonaws.com/mo-bh-backend:latest
-        docker push 522642610479.dkr.ecr.eu-north-1.amazonaws.com/mo-bh-backend:latest
+        docker tag mo-bh-backend:dev-latest 522642610479.dkr.ecr.eu-north-1.amazonaws.com/mo-bh-backend:dev-latest
+        docker push 522642610479.dkr.ecr.eu-north-1.amazonaws.com/mo-bh-backend:dev-latest

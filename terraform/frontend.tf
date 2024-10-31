@@ -32,7 +32,7 @@ module "ecs_service" {
   # Container definition(s)
   container_definitions = {
     (each.key) = {
-      image = "${each.value.repo}:${each.value.tag}"
+      image = "${aws_ecr_repository.ecr[each.key].repository_url}:${each.value.tag}"
       port_mappings = [
         {
           name          = each.value.container_name

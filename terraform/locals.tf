@@ -22,13 +22,11 @@ locals {
     frontend = {
       container_name = "${local.resource_prefix}-frontend"
       port           = 80
-      repo           = local.frontend_repo_url
       tag            = var.frontend_docker_tag
     }
     backend = {
       container_name = "${local.resource_prefix}-backend"
       port           = 8080
-      repo           = local.backend_repo_url
       tag            = var.backend_docker_tag
     }
   }

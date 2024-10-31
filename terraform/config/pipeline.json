@@ -1,6 +1,7 @@
 {
     "dev": {
         "account_id": 522642610479,
-        "aws_region": "eu-north-1"
+        "aws_region": "eu-north-1",
+        "code_owner": "mh"
     }
 }

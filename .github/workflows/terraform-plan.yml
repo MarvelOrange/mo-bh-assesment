@@ -11,6 +11,14 @@ on:
         required: false
         description: "Enter version of Terraform to use"
         default: "1.6.6"
+      working_dir:
+        required: true
+        description: Path for Terraform code
+        default: "./terraform"
+      state_bucket:
+        required: true
+        description: Terraform state bucket
+        default: "522642610479-eu-north-1-tf-state"
 
 jobs:
   plan:
@@ -34,13 +42,11 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const configPath = './terraform/config/pipeline.json';
+            const configPath = "./${{ inputs.working_dir }}/config/pipeline.json";
             const environment = "${{ inputs.environment }}";
             const defaults = {
-              aws_region: "${{ inputs.aws_region }}",
-              code_owner: "${{ inputs.code_owner }}",
-              state_bucket: "${{ inputs.state_bucket }}",
-              state_bucket_region: "${{ inputs.state_bucket_region }}"
+              aws_region: "eu-west-1",
+              code_owner: "marvel",
             };
             let config = {};
             if (fs.existsSync(configPath)) {
@@ -69,3 +75,32 @@ jobs:
           aws-region: ${{ steps.load_config.outputs.aws_region }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      # Check if .tfvars file exists
+      - name: Check Environment Configuration
+        id: check_env
+        working-directory: ${{ inputs.working_dir }}
+        run: |
+          ENVIRONMENT="${{ inputs.environment }}"
+          ENV_FILE="./env/${ENVIRONMENT}.tfvars"
+          if [[ "$ENVIRONMENT" != "none" ]] && [ ! -f "$ENV_FILE" ]; then
+            echo "Error: .tfvars file does not exist for the specified environment $ENVIRONMENT."
+            job_summary="### Job failed :warning:\n**Error:** The required .tfvars file for the environment '$ENVIRONMENT' does not exist. Please ensure the file is present in the './env/' directory and try again."
+            echo "$job_summary" >> $GITHUB_STEP_SUMMARY
+            exit 1  # Fail the step if the .tfvars file does not exist
+          elif [[ "$ENVIRONMENT" != "none" ]]; then
+            echo "tfvars_path=$ENV_FILE" >> $GITHUB_ENV
+          else
+            echo "tfvars_path=" >> $GITHUB_ENV
+          fi
+
+      # Initialise Terraform in path
+      - name: Terraform init
+        run: |
+          AWS_TF_STATE_BUCKET_REGION=$(aws s3api get-bucket-location --bucket-name s3://$AWS_TF_STATE_BUCKET --query '.LocationConstraint' --output text)
+          AWS_TF_STATE_PATH=$(echo "${{ steps.load_config.outputs.code_owner }}/aws/terraform/${{ github.event.repository.name }}/${{ steps.load_config.outputs.account_id }}/${{ inputs.environment }}/terraform.tfstate" | tr '[:upper:]' '[:lower:]')
+          terraform init \
+            -backend-config "bucket=${{ inputs.state_bucket }}" \
+            -backend-config "region=$AWS_TF_STATE_BUCKET_REGION" \
+            -backend-config "key=$AWS_TF_STATE_PATH" \
+            -backend-config "encrypt=true"

@@ -31,7 +31,7 @@ module "ecs_service" {
 
   # Container definition(s)
   container_definitions = {
-    (each.key) = {
+    ("${local.resource_prefix}-${each.key}") = {
       image = "${aws_ecr_repository.ecr[each.key].repository_url}:${each.value.tag}"
       port_mappings = [
         {
@@ -46,7 +46,7 @@ module "ecs_service" {
 
       enable_cloudwatch_logging              = true
       create_cloudwatch_log_group            = true
-      cloudwatch_log_group_name              = "/aws/ecs/${local.resource_prefix}/${each.value.container_name}"
+      cloudwatch_log_group_name              = "/aws/ecs/${each.value.container_name}"
       cloudwatch_log_group_retention_in_days = 1
 
       log_configuration = {

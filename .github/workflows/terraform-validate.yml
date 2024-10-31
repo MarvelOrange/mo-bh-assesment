@@ -2,8 +2,8 @@ name: Terraform validate
 
 on:
  push:
-    # branches: [ main ]
-    branches: [ '**' ]
+    branches-ignore:
+      - "main"   
     paths:
       - terraform/**
       - .github/workflows/terraform*
@@ -19,3 +19,40 @@ jobs:
         id: fmt
         run: terraform fmt -check -diff -recursive
         working-directory: terraform/
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.0.0
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Validate
+        run: |
+          terraform init -backend=false
+          terraform validate
+        working-directory: terraform/
+
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Checkov GitHub Action
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          quiet: true
+          output_format: cli,sarif
+          output_file_path: console,checkov-results.json
+
+      - name: Upload Checkov SARIF Results as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkov-results-${{ github.run_id }}
+          path: checkov-results.json
+  

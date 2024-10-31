@@ -25,10 +25,6 @@ module "ecs_service" {
     }
   }
 
-  volume = {
-    my-vol = {}
-  }
-
   # Container definition(s)
   container_definitions = {
     ("${local.resource_prefix}-${each.key}") = {

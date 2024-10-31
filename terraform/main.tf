@@ -57,7 +57,7 @@ module "autoscaling" {
   for_each = {
     # Spot instances
     ex_2 = {
-      instance_type              = "t3.small"
+      instance_type              = "t3.medium"
       use_mixed_instances_policy = false
       mixed_instances_policy     = {}
       user_data                  = <<-EOT

@@ -1,0 +1,20 @@
+name: DotNet Build and Test
+
+on:
+ push:
+    # branches: [ main ]
+    branches: [ '**' ]
+    paths:
+      - frontend/**
+      - .github/workflows/dotnet**      
+
+jobs:
+  Build_Publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Docker image
+      working-directory: ./frontend
+      run: docker build -t springting-frontend:pipeline-build .

@@ -1,0 +1,237 @@
+name: Terraform Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Enter environment name
+        required: true
+        default: "none"
+      terraform_version:
+        required: false
+        description: "Enter version of Terraform to use"
+        default: "1.6.6"
+      working_dir:
+        required: true
+        description: Path for Terraform code
+        default: "./terraform"
+      state_bucket:
+        required: true
+        description: Terraform state bucket
+        default: "522642610479-eu-north-1-tf-state"
+
+jobs:
+  plan:
+    name: terraform plan
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      # - name: Check if on default branch
+      #   if: github.ref_name != github.event.repository.default_branch
+      #   run: |
+      #     job_summary="### Job failed :warning:\nThis workflow is intended to run only on the default branch (${{ github.event.repository.default_branch }}). Exiting because it is running on branch ${{ github.ref_name }}."
+      #     echo -e "$job_summary" >> $GITHUB_STEP_SUMMARY
+      #     exit 1
+
+      # Check out Repo
+      - uses: actions/checkout@v4
+
+      # Set up Terraform
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+
+      - name: Load environment specific configurations
+        id: load_config
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const configPath = "./${{ inputs.working_dir }}/config/pipeline.json";
+            const environment = "${{ inputs.environment }}";
+            const defaults = {
+              aws_region: "eu-west-1",
+              code_owner: "marvel",
+            };
+            let config = {};
+            if (fs.existsSync(configPath)) {
+              const fullConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+              if (!fullConfig[environment]) {
+                core.setFailed(`No configuration found for environment '${environment}'.`);
+              } else if (!fullConfig[environment].account_id) {
+                core.setFailed(`'account_id' is not defined in the configuration for environment '${environment}'.`);
+              } else {
+                config = { ...defaults, ...fullConfig[environment] }; // Merge defaults with environment-specific config
+              }
+            } else {
+              core.setFailed(`Configuration file not found at '${configPath}'.`);
+            }
+            for (const key in config) {
+              if (config[key]) {
+                core.setOutput(key, config[key]);
+                console.log(`Set ${key}: ${config[key]}`);
+              }
+            }
+
+        # Authenticate via OIDC to AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ steps.load_config.outputs.aws_region }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      # Check if .tfvars file exists
+      - name: Check Environment Configuration
+        id: check_env
+        working-directory: ${{ inputs.working_dir }}
+        run: |
+          ENVIRONMENT="${{ inputs.environment }}"
+          ENV_FILE="./env/${ENVIRONMENT}.tfvars"
+          if [[ "$ENVIRONMENT" != "none" ]] && [ ! -f "$ENV_FILE" ]; then
+            echo "Error: .tfvars file does not exist for the specified environment $ENVIRONMENT."
+            job_summary="### Job failed :warning:\n**Error:** The required .tfvars file for the environment '$ENVIRONMENT' does not exist. Please ensure the file is present in the './env/' directory and try again."
+            echo "$job_summary" >> $GITHUB_STEP_SUMMARY
+            exit 1  # Fail the step if the .tfvars file does not exist
+          elif [[ "$ENVIRONMENT" != "none" ]]; then
+            echo "tfvars_path=$ENV_FILE" >> $GITHUB_ENV
+          else
+            echo "tfvars_path=" >> $GITHUB_ENV
+          fi
+
+      # Initialise Terraform in path
+      - name: Terraform init
+        working-directory: ${{ inputs.working_dir }}
+        run: |
+          AWS_TF_STATE_BUCKET_REGION=$(aws s3api get-bucket-location --bucket ${{ inputs.state_bucket }} --query 'LocationConstraint' --output text)
+          AWS_TF_STATE_PATH=$(echo "${{ steps.load_config.outputs.code_owner }}/aws/terraform/${{ github.event.repository.name }}/${{ steps.load_config.outputs.account_id }}/${{ inputs.environment }}/terraform.tfstate" | tr '[:upper:]' '[:lower:]')
+          terraform init \
+            -backend-config "bucket=${{ inputs.state_bucket }}" \
+            -backend-config "region=$AWS_TF_STATE_BUCKET_REGION" \
+            -backend-config "key=$AWS_TF_STATE_PATH" \
+            -backend-config "encrypt=true"
+
+      # Run Terraform plan
+      - name: Terraform plan
+        working-directory: ${{ inputs.working_dir }}      
+        run: |
+          TFCMD="terraform plan -out ${{ github.event.repository.name }}-${{ inputs.environment }}.out"
+          if [ -n "${{ env.tfvars_path }}" ]; then
+            TFCMD="$TFCMD -var-file=${{ env.tfvars_path }}"
+          fi
+          echo "Running: $TFCMD"
+          eval $TFCMD
+
+      # Display Terraform Plan as Markdown and append to job summary
+      - name: Terraform plan and markdown summary
+        id: plan
+        working-directory: ${{ inputs.working_dir }}        
+        run: |
+          echo '```terraform' >> $GITHUB_STEP_SUMMARY
+          echo '#### Terraform Plan' >> $GITHUB_STEP_SUMMARY
+          terraform show -no-color ${{ github.event.repository.name }}-${{ inputs.environment }}.out | tee -a $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # Upload Terraform Plan to Artifacts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-${{ inputs.environment }}
+          path: ./${{ inputs.working_dir }}/${{ github.event.repository.name }}-${{ inputs.environment }}.out
+
+  apply:
+    name: terraform apply
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+    needs: plan
+    environment: manual_approve
+    steps:
+      # Check out Repo
+      - uses: actions/checkout@v4
+
+      # Set up Terraform
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+
+      - name: Load environment specific configurations
+        id: load_config
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const configPath = "./${{ inputs.working_dir }}/config/pipeline.json";
+            const environment = "${{ inputs.environment }}";
+            const defaults = {
+              aws_region: "eu-west-1",
+              code_owner: "marvel",
+            };
+            let config = {};
+            if (fs.existsSync(configPath)) {
+              const fullConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+              if (!fullConfig[environment]) {
+                core.setFailed(`No configuration found for environment '${environment}'.`);
+              } else if (!fullConfig[environment].account_id) {
+                core.setFailed(`'account_id' is not defined in the configuration for environment '${environment}'.`);
+              } else {
+                config = { ...defaults, ...fullConfig[environment] }; // Merge defaults with environment-specific config
+              }
+            } else {
+              core.setFailed(`Configuration file not found at '${configPath}'.`);
+            }
+            for (const key in config) {
+              if (config[key]) {
+                core.setOutput(key, config[key]);
+                console.log(`Set ${key}: ${config[key]}`);
+              }
+            }
+
+        # Authenticate via OIDC to AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ steps.load_config.outputs.aws_region }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      # Initialise Terraform in path
+      - name: Terraform init
+        working-directory: ${{ inputs.working_dir }}
+        run: |
+          AWS_TF_STATE_BUCKET_REGION=$(aws s3api get-bucket-location --bucket ${{ inputs.state_bucket }} --query 'LocationConstraint' --output text)
+          AWS_TF_STATE_PATH=$(echo "${{ steps.load_config.outputs.code_owner }}/aws/terraform/${{ github.event.repository.name }}/${{ steps.load_config.outputs.account_id }}/${{ inputs.environment }}/terraform.tfstate" | tr '[:upper:]' '[:lower:]')
+          terraform init \
+            -backend-config "bucket=${{ inputs.state_bucket }}" \
+            -backend-config "region=$AWS_TF_STATE_BUCKET_REGION" \
+            -backend-config "key=$AWS_TF_STATE_PATH" \
+            -backend-config "encrypt=true"
+
+      - name: Download Terraform Plan output
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-${{ inputs.environment }}
+          path: ${{ inputs.working_dir }}/
+
+      # Run Terraform Apply and Capture Output
+      - name: Terraform apply
+        working-directory: ${{ inputs.working_dir }}
+        run: |
+          output=$(mktemp)
+          terraform apply -auto-approve -no-color ${{ github.event.repository.name }}-${{ inputs.environment }}.out 2>&1 | tee "$output"
+          if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+            echo "#### Terraform Apply Failed" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat "$output" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "#### Terraform Apply Succeeded" >> $GITHUB_STEP_SUMMARY
+            echo "Release Hash: $(echo '${{ github.sha }}' | cut -c1-7)" >> $GITHUB_STEP_SUMMARY  # Adding short commit hash to step summary output
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat "$output" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi          

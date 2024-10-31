@@ -1,0 +1,29 @@
+name: Terraform Plan
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Enter environment name
+        required: true
+        default: "none"
+      terraform_version:
+        required: false
+        description: "Enter version of Terraform to use"
+        default: "1.6.6"
+
+jobs:
+  plan:
+    name: terraform plan
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      # Check out Repo
+      - uses: actions/checkout@v4
+
+      # Set up Terraform
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.terraform_version }}

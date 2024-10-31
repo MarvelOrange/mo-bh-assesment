@@ -22,9 +22,6 @@ on:
       tflint_version:
         type: string
         default: "latest"
-      allow_to_fail:
-        type: boolean
-        default: false
 
 env:
   SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -38,7 +35,6 @@ permissions:
 jobs:
   fmt:
     runs-on: ${{ inputs.runs-on }}
-    continue-on-error: ${{ inputs.allow_to_fail }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -52,7 +48,6 @@ jobs:
 
   validate:
     runs-on: ${{ inputs.runs-on }}
-    continue-on-error: ${{ inputs.allow_to_fail }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -82,7 +77,6 @@ jobs:
 
   tflint:
     runs-on: ${{ inputs.runs-on }}
-    continue-on-error: ${{ inputs.allow_to_fail }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -115,7 +109,6 @@ jobs:
 
   checkov:
     runs-on: ${{ inputs.runs-on }}
-    continue-on-error: ${{ inputs.allow_to_fail }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4

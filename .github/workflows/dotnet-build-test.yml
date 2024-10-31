@@ -6,7 +6,7 @@ on:
     branches: [ '**' ]
     paths:
       - frontend/**
-      - .github/workflows/dotnet**      
+      - .github/workflows/dotnet*
 
 jobs:
   Build_Publish:

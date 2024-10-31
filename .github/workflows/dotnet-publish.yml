@@ -16,14 +16,18 @@ jobs:
 
     - name: Build Docker image
       working-directory: ./frontend
-      run: docker build -t springting-frontend:dev-latest .
+      run: docker build -t mo-bh-frontend:dev-latest .
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-2 
+        aws-region: eu-north-1
 
-    # - name: Docker Push
-    #   run: docker push bla bla 
+    - name: Docker Push
+      working-directory: ./frontend
+      run: |
+        aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 522642610479.dkr.ecr.eu-north-1.amazonaws.com
+        docker tag mo-bh-frontend:latest 522642610479.dkr.ecr.eu-north-1.amazonaws.com/mo-bh-frontend:latest
+        docker push 522642610479.dkr.ecr.eu-north-1.amazonaws.com/mo-bh-frontend:latest

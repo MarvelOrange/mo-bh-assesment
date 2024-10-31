@@ -1,4 +1,4 @@
-# BH Assesment App
+# BH Assessment App
 
 ## Deployment
 
@@ -8,3 +8,15 @@
 4. Run the dotnet-publish workflow from GitHub actions
 5. Run the maven-publish workflow from GitHub actions
 6. Run the deploy-ecs workflow from GitHub actions
+
+## Solution
+
+The following repo creates and maintains a full stack application hosted in microservices.
+Frontend (dotnet - docker)
+Backend (maven - docker) 
+AWS infra (terraform/cloudformation)
+Github Actions (CICD)
+
+### Design
+
+![Design](docs/mo-bh.drawio.png)

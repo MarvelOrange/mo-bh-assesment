@@ -100,12 +100,10 @@ module "autoscaling" {
   max_size            = 1
   desired_capacity    = 1
 
-  # https://github.com/hashicorp/terraform-provider-aws/issues/12582
   autoscaling_group_tags = {
     AmazonECSManaged = true
   }
 
-  # Required for  managed_termination_protection = "ENABLED"
   protect_from_scale_in = true
 
   # Spot instances
@@ -127,9 +125,13 @@ module "autoscaling_sg" {
     {
       rule                     = "http-80-tcp"
       source_security_group_id = module.alb.security_group_id
+    },
+    {
+      rule                     = "http-8080-tcp"
+      source_security_group_id = module.alb.security_group_id
     }
   ]
-  number_of_computed_ingress_with_source_security_group_id = 1
+  number_of_computed_ingress_with_source_security_group_id = 2
 
   egress_rules = ["all-all"]
 
@@ -176,22 +178,58 @@ module "alb" {
   }
 
   listeners = {
-    ex-https = {
+    frontend-https = {
       port            = 443
       protocol        = "HTTPS"
       ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
       certificate_arn = local.ssl_cert_acm_arn
 
       forward = {
-        target_group_key = "ex_ecs"
+        target_group_key = "frontend"
+      }
+
+      rules = {
+        backend = {
+          actions = [{
+            type             = "forward"
+            target_group_key = "backend"
+          }]
+          conditions = [{
+            path_pattern = {
+              values = ["/backend/*"]
+            }
+          }]
+        }
       }
     }
   }
 
   target_groups = {
-    ex_ecs = {
+    frontend = {
       backend_protocol                  = "HTTP"
       backend_port                      = 80
+      target_type                       = "ip"
+      deregistration_delay              = 5
+      load_balancing_cross_zone_enabled = true
+
+      health_check = {
+        enabled             = true
+        healthy_threshold   = 5
+        interval            = 30
+        matcher             = "200"
+        path                = "/"
+        port                = "traffic-port"
+        protocol            = "HTTP"
+        timeout             = 5
+        unhealthy_threshold = 2
+      }
+
+      create_attachment = false
+    }
+
+    backend = {
+      backend_protocol                  = "HTTP"
+      backend_port                      = 8080
       target_type                       = "ip"
       deregistration_delay              = 5
       load_balancing_cross_zone_enabled = true

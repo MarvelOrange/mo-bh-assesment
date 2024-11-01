@@ -1,7 +1,8 @@
 name: DotNet Publish
 
 on:
- push:
+  workflow_dispatch:
+  push:
     branches: [ main ]
     paths:
       - frontend/**

@@ -14,7 +14,6 @@ data "aws_acm_certificate" "mo_issued" {
 4. Run terraform-apply workflow from GitHub actions, ensure the plan is appropriate before approving deployment
 5. Run the dotnet-publish workflow from GitHub actions
 6. Run the maven-publish workflow from GitHub actions
-7. Run the deploy-ecs workflow from GitHub actions
 
 ## Solution
 

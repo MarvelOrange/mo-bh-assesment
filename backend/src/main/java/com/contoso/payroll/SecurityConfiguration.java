@@ -31,14 +31,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 				.anyRequest().authenticated()
 				.and()
 			.formLogin()
-				.defaultSuccessUrl("/", true)
+				.defaultSuccessUrl("/backend", true)
 				.permitAll()
 				.and()
 			.httpBasic()
 				.and()
 			.csrf().disable()
 			.logout()
-				.logoutSuccessUrl("/");
+				.logoutSuccessUrl("/backend");
 	}
 
 }

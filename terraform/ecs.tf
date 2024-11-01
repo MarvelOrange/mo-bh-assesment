@@ -61,5 +61,26 @@ module "ecs_service" {
 
   subnet_ids = module.vpc.private_subnets
 
+  security_group_rules = {
+    ingress = {
+      type                     = "ingress"
+      from_port                = each.value.port
+      to_port                  = each.value.port
+      protocol                 = "tcp"
+      description              = "Service port"
+      source_security_group_id = module.alb.security_group_id
+    }
+    egress_all = {
+      type        = "egress"
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+
+  memory = 1024
+  cpu    = 512
+
   tags = local.tags
 }

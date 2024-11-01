@@ -196,7 +196,7 @@ module "alb" {
           }]
           conditions = [{
             path_pattern = {
-              values = ["/backend"]
+              values = ["/backend", "/login"]
             }
           }]
         }
@@ -206,8 +206,8 @@ module "alb" {
 
   target_groups = {
     frontend = {
-      backend_protocol                  = "HTTP"
-      backend_port                      = 80
+      protocol                          = "HTTP"
+      port                              = 80
       target_type                       = "ip"
       deregistration_delay              = 5
       load_balancing_cross_zone_enabled = true
@@ -228,8 +228,8 @@ module "alb" {
     }
 
     backend = {
-      backend_protocol                  = "HTTP"
-      backend_port                      = 8080
+      protocol                          = "HTTP"
+      port                              = 8080
       target_type                       = "ip"
       deregistration_delay              = 5
       load_balancing_cross_zone_enabled = true
@@ -239,7 +239,7 @@ module "alb" {
         healthy_threshold   = 5
         interval            = 30
         matcher             = "200"
-        path                = "/backend"
+        path                = "/login"
         port                = "traffic-port"
         protocol            = "HTTP"
         timeout             = 5

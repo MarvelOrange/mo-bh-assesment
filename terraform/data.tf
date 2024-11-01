@@ -8,3 +8,7 @@ data "aws_acm_certificate" "mo_issued" {
   domain   = "*.marvelorange.co.uk"
   statuses = ["ISSUED"]
 }
+
+data "aws_route53_zone" "selected" {
+  name = "marvelorange.co.uk"
+}

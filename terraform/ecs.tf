@@ -77,7 +77,7 @@ module "ecs_service" {
       protocol    = "-1"
       cidr_blocks = ["0.0.0.0/0"]
     }
-  }  
+  }
 
   tags = local.tags
 }

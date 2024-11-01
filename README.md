@@ -26,3 +26,22 @@ Github Actions (CICD)
 ### Design
 
 ![Design](docs/mo-bh.drawio.png)
+
+## Local Development
+
+### Terraform
+
+Make changes as you need to Terraform directory files. 
+Any push with changes in terraform directory will kick off terraform-validate workflow.
+
+Local plan:
+```bash
+cd terraform/
+bash scripts/plan.sh <env name>
+```
+
+Cost analysis:
+```bash
+cd terraform/
+bash scripts/cost.sh <env name>
+```

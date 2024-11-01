@@ -13,6 +13,7 @@ locals {
   tags = {
     GithubRepo = "mo-bh-assesment"
     GithubOrg  = "marvelorange"
+    Env        = var.env_name
   }
 
   container_configs = {

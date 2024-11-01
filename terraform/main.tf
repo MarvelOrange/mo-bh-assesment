@@ -187,17 +187,6 @@ module "alb" {
       forward = {
         target_group_key = "frontend"
       }
-    }
-
-    backend-https = {
-      port            = 443
-      protocol        = "HTTPS"
-      ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
-      certificate_arn = local.ssl_cert_acm_arn
-
-      forward = {
-        target_group_key = "backend"
-      }
 
       rules = {
         backend = {

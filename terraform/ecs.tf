@@ -79,5 +79,8 @@ module "ecs_service" {
     }
   }
 
+  memory = 1024
+  cpu    = 512
+
   tags = local.tags
 }

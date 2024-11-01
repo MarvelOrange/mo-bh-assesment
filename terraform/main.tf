@@ -196,7 +196,7 @@ module "alb" {
           }]
           conditions = [{
             path_pattern = {
-              values = ["/backend", "/login", "/api"]
+              values = ["/api/*", "/login", "/api"]
             }
           }]
         }
